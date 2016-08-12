@@ -1,5 +1,6 @@
-# Wordpress Testing Template
-Template for using travis in your wordpress projects.
+# Clean Wordpress Testing Template
+Template for using travis to test your wordpress projects.
+
 ## Configuration
 ### Travis Enviromental variables
 
