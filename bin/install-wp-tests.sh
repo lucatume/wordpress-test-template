@@ -41,7 +41,7 @@ download() {
   fi
 }
 
-install_wp() {
+download_wp() {
   if [ -d $WP_CORE_DIR ]; then
     return;
   fi
@@ -60,37 +60,12 @@ install_wp() {
   download https://raw.github.com/markoheijnen/wp-mysqli/master/db.php $WP_CORE_DIR/wp-content/db.php
 }
 
-install_test_suite() {
+configure_wp() {
   # portable in-place argument for both GNU sed and Mac OSX sed
   if [[ $(uname -s) == 'Darwin' ]]; then
     local ioption='-i .bak'
   else
     local ioption='-i'
-  fi
-
-  # set up testing suite if it doesn't yet exist
-  if [ ! "$(ls -A $WP_TESTS_DIR)" ]; then
-    # set up testing suite
-    mkdir -p $WP_TESTS_DIR
-      #if latest, use trunk develop version, if not, use major version
-      if [ $WP_VERSION == 'latest' ]; then
-        local TEST_BRANCH_NAME='trunk'
-      else
-        local TEST_BRANCH_NAME='branches/'$(sed 's/\([0-9]*\.[0-9]*\).*/\1/' <<< $WP_VERSION)
-      fi
-    svn co --quiet http://develop.svn.wordpress.org/${TEST_BRANCH_NAME}/tests/phpunit/includes/ $WP_TESTS_DIR
-  fi
-
-  cd $WP_TESTS_DIR
-
-  # Install barebone wp-tests-config.php which is faster for unit tests
-  if [ ! -f wp-tests-config.php ]; then
-    download https://develop.svn.wordpress.org/trunk/wp-tests-config-sample.php $(dirname ${WP_TESTS_DIR})/wp-tests-config.php
-    sed $ioption "s:dirname( __FILE__ ) . '/src/':'$WP_CORE_DIR':" $(dirname ${WP_TESTS_DIR})/wp-tests-config.php
-    sed $ioption "s/youremptytestdbnamehere/$DB_NAME/" $(dirname ${WP_TESTS_DIR})/wp-tests-config.php
-    sed $ioption "s/yourusernamehere/$DB_USER/" $(dirname ${WP_TESTS_DIR})/wp-tests-config.php
-    sed $ioption "s/yourpasswordhere/$DB_PASS/" $(dirname ${WP_TESTS_DIR})/wp-tests-config.php
-    sed $ioption "s|localhost|${DB_HOST}|" $(dirname ${WP_TESTS_DIR})/wp-tests-config.php
   fi
 
   # Install real wp-config.php too
@@ -151,11 +126,6 @@ install_real_wp() {
   php wp-cli.phar core install  --url=$WP_TEST_URL --title='Test' --admin_user=$WP_TEST_USER --admin_password=$WP_TEST_USER_PASS --admin_email="$WP_TEST_USER@wordpress.dev" --path=$WP_CORE_DIR
 }
 
-install_rspec_requirements() {
-  gem install bundler
-  bundle install --gemfile=$DIR/spec/Gemfile
-}
-
 start_server() {
   mv $DIR/lib/router.php $WP_CORE_DIR/router.php
   cd $WP_CORE_DIR
@@ -163,21 +133,9 @@ start_server() {
   php -S 0.0.0.0:$WP_PORT router.php &
 }
 
-run_phpcs() {
-  pear config-set auto_discover 1
-  pear install PHP_CodeSniffer
-  git clone git://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards.git $(pear config-get php_dir)/PHP/CodeSniffer/Standards/WordPress
-  phpenv rehash
-  npm install -g jshint
-  phpcs --config-set installed_paths $(pear config-get php_dir)/PHP/CodeSniffer/Standards/WordPress
-  phpcs -i
-}
-
-install_wp
-install_test_suite
+download_wp
+configure_wp
 install_db
 install_real_wp
 link_this_project
-install_rspec_requirements
 start_server
-run_phpcs
