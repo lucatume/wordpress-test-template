@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ##
-# This script installs wordpress for phpunit tests and rspec integration tests
+# This script installs wordpress for testing purposes
 ##
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 DIR=$(dirname ${DIR})
@@ -56,8 +56,6 @@ download_wp() {
 
   download https://wordpress.org/${ARCHIVE_NAME}.tar.gz  /tmp/wordpress.tar.gz
   tar --strip-components=1 -zxmf /tmp/wordpress.tar.gz -C $WP_CORE_DIR
-
-  download https://raw.github.com/markoheijnen/wp-mysqli/master/db.php $WP_CORE_DIR/wp-content/db.php
 }
 
 configure_wp() {
